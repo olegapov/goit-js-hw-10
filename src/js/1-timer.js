@@ -34,7 +34,7 @@ function handlerTimer(event) {
     if (userSelectedDate - currentTime <= 0) {
       clearInterval(intervalId);
       dateTimePicker.disabled = false;
-      updateTimerInterface({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      leftTimeMarkUp(fieldsDate, leftTime);
       return;
     }
     const leftTime = convertMs(userSelectedDate - currentTime);
