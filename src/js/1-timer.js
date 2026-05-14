@@ -8,40 +8,16 @@ import iziToast from 'izitoast';
 // Додатковий імпорт стилів
 import 'izitoast/dist/css/iziToast.min.css';
 
-const dateTimePicker = document.querySelector('#datetime-picker');
-const btnStart = document.querySelector('button[data-start]');
-btnStart.disabled = true;
-const fieldsDate = {
-  days: document.querySelector('[data-days]'),
-  hours: document.querySelector('[data-hours]'),
-  minutes: document.querySelector('[data-minutes]'),
-  seconds: document.querySelector('[data-seconds]'),
-};
-let intervalId = null;
-
-console.log(fieldsDate);
+const startBtn = document.querySelector('button[data-start]');
+const dateInput = document.querySelector('#datetime-picker');
+const daysSpan = document.querySelector('[data-days]');
+const hoursSpan = document.querySelector('[data-hours]');
+const minutesSpan = document.querySelector('[data-minutes]');
+const secondsSpan = document.querySelector('[data-seconds]');
+startBtn.disabled = true;
 
 let userSelectedDate = null;
-
-btnStart.addEventListener('click', handlerTimer);
-
-function handlerTimer(event) {
-  btnStart.disabled = true;
-  dateTimePicker.disabled = true;
-  intervalId = setInterval(() => {
-    const currentTime = Date.now();
-
-    if (userSelectedDate - currentTime <= 0) {
-      clearInterval(intervalId);
-      dateTimePicker.disabled = false;
-      return;
-    }
-    const leftTime = convertMs(userSelectedDate - currentTime);
-
-    leftTimeMarkUp(fieldsDate, leftTime);
-    console.log(leftTime);
-  }, 1000);
-}
+let intervalId = null;
 
 const options = {
   enableTime: true,
@@ -49,24 +25,59 @@ const options = {
   defaultDate: new Date(),
   minuteIncrement: 1,
   onClose(selectedDates) {
-    const currentTime = Date.now();
-    console.log(currentTime);
-    if (currentTime >= selectedDates[0].getTime()) {
+    const currentDate = Date.now();
+
+    userSelectedDate = selectedDates[0];
+
+    if (userSelectedDate <= currentDate) {
       iziToast.show({
-        title: 'Hey',
+        title: 'Error',
+        backgroundColor: 'red',
+        titleColor: 'white',
+        messageColor: 'white',
+        iconUrl: '/img/error-timer-icon.svg',
+        iconColor: 'white',
+        position: 'topRight',
         message: 'Please choose a date in the future',
-        color: 'red',
-        position: 'topCenter',
       });
-      btnStart.disabled = true;
+      startBtn.disabled = true;
       return;
+    } else {
+      startBtn.disabled = false;
     }
-    userSelectedDate = selectedDates[0].getTime();
-    btnStart.disabled = false;
   },
 };
 
-flatpickr(dateTimePicker, options);
+flatpickr(dateInput, options);
+
+startBtn.addEventListener('click', handleStart);
+
+function handleStart(event) {
+  event.target.disabled = true;
+  dateInput.disabled = true;
+
+  intervalId = setInterval(() => {
+    const currentDate = Date.now();
+    const deltaTime = userSelectedDate - currentDate;
+
+    if (deltaTime <= 0) {
+      clearInterval(intervalId);
+      dateInput.disabled = false;
+      return;
+    }
+
+    const objTime = convertMs(deltaTime);
+
+    daysSpan.textContent = addLeadingZero(objTime.days);
+    hoursSpan.textContent = addLeadingZero(objTime.hours);
+    minutesSpan.textContent = addLeadingZero(objTime.minutes);
+    secondsSpan.textContent = addLeadingZero(objTime.seconds);
+  }, 1000);
+}
+
+function addLeadingZero(value) {
+  return String(value).padStart(2, '0');
+}
 
 function convertMs(ms) {
   // Number of milliseconds per unit of time
@@ -85,11 +96,4 @@ function convertMs(ms) {
   const seconds = Math.floor((((ms % day) % hour) % minute) / second);
 
   return { days, hours, minutes, seconds };
-}
-
-function leftTimeMarkUp(objMarkup, objLeftTime) {
-  objMarkup.days.textContent = String(objLeftTime.days).padStart(2, '0');
-  objMarkup.hours.textContent = String(objLeftTime.hours).padStart(2, '0');
-  objMarkup.minutes.textContent = String(objLeftTime.minutes).padStart(2, '0');
-  objMarkup.seconds.textContent = String(objLeftTime.seconds).padStart(2, '0');
 }
